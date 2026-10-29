@@ -8,7 +8,7 @@ a permission policy that only asks when it matters.
 
 *Clone it, run one script, and OpenCode comes out ready to work.*
 
-![license](https://img.shields.io/badge/license-The%20Unlicense-4c9ee8?style=flat-square)
+![license](https://img.shields.io/badge/license-MIT-4c9ee8?style=flat-square)
 ![bash](https://img.shields.io/badge/uses-bash%20%2B%20tar-121011?style=flat-square&logo=gnu-bash&logoColor=white)
 ![target](https://img.shields.io/badge/opencode-v2.2.x-5963fc?style=flat-square)
 ![provider](https://img.shields.io/badge/provider-OpenCode%20Go-90b99f?style=flat-square)
@@ -141,5 +141,6 @@ Included free servers:
 
 ## 📄 License
 
-Released to the public domain under [The Unlicense](LICENSE) — use, modify,
-and redistribute freely, no attribution required.
+Released under the [MIT License](LICENSE) — use, modify, sell, and redistribute
+freely; the only requirement is keeping the copyright notice and permission
+text with copies.
