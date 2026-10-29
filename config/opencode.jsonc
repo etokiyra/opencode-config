@@ -1,0 +1,125 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // ── Global OpenCode configuration for OpenCode Go ──────────────────────────
+  // Installed by install.sh into ~/.config/opencode/opencode.jsonc.
+  // Reloading is automatic: config changes apply without restart.
+
+  // Daily driver: best price/performance on the Go plan.
+  // $0.15/$0.50 per 1M tokens, $60/mo allowance, strong agentic coding, ZDR.
+  "model": "opencode-go/glm-5.3-flash",
+
+  "default_agent": "build",
+
+  // Install updates automatically (running servers need a manual restart to pick them up).
+  "update": "auto",
+
+  // Auto-run detected formatters (prettier, ruff, etc.) after writes/edits.
+  "formatter": true,
+
+  // Give agents a todo tool for multi-step work.
+  "experimental": {
+    "todo": true
+  },
+
+  // ── Permissions ─────────────────────────────────────────────────────────────
+  // Philosophy: permissive by default. Agents work freely; the only prompts are
+  // for publishing to remotes (commit/push/PR/release) and destroys of
+  // uncommitted work. Secrets and OS material are hard-denied outright, never
+  // asked. Ordered rules; the LAST matching rule wins.
+  "permissions": [
+    { "action": "shell", "resource": "*", "effect": "allow" },
+
+    // ⛔ Hard-denied: authentication material and OS-sensitive files.
+    { "action": "read", "resource": "~/.ssh/*", "effect": "deny" },
+    { "action": "read", "resource": "~/.gnupg/*", "effect": "deny" },
+    { "action": "read", "resource": "~/.aws/*", "effect": "deny" },
+    { "action": "read", "resource": "~/.kube/*", "effect": "deny" },
+    { "action": "read", "resource": "~/.local/share/opencode/auth.json", "effect": "deny" },
+    { "action": "shell", "resource": "sudo *", "effect": "deny" },
+    { "action": "shell", "resource": "cat /etc/shadow*", "effect": "deny" },
+    { "action": "shell", "resource": "cat /etc/sudoers*", "effect": "deny" },
+    { "action": "shell", "resource": "cat *id_rsa*", "effect": "deny" },
+    { "action": "shell", "resource": "cat *known_hosts*", "effect": "deny" },
+    { "action": "shell", "resource": "cat *credentials*", "effect": "deny" },
+    { "action": "shell", "resource": "cat *token*", "effect": "deny" },
+
+    // 🙋 Ask: publishing to remotes / creating public artifacts.
+    { "action": "shell", "resource": "git commit *", "effect": "ask" },
+    { "action": "shell", "resource": "git push *", "effect": "ask" },
+    { "action": "shell", "resource": "git tag *", "effect": "ask" },
+    { "action": "shell", "resource": "gh pr create *", "effect": "ask" },
+    { "action": "shell", "resource": "gh pr merge *", "effect": "ask" },
+    { "action": "shell", "resource": "gh pr close *", "effect": "ask" },
+    { "action": "shell", "resource": "gh release *", "effect": "ask" },
+
+    // 🙋 Ask: destructive history/working-tree operations that eat uncommitted work.
+    { "action": "shell", "resource": "git reset --hard *", "effect": "ask" },
+    { "action": "shell", "resource": "git clean -f*", "effect": "ask" },
+    { "action": "shell", "resource": "git filter-branch *", "effect": "ask" },
+    { "action": "shell", "resource": "git rebase *", "effect": "allow" },
+
+    // 🙋 Ask: writing outside the workspace (system/user files).
+    { "action": "external_directory", "resource": "*", "effect": "ask" },
+
+    // 🔒 Local-network guard: agents must not poke services on this machine.
+    { "action": "webfetch", "resource": "http://localhost*", "effect": "deny" },
+    { "action": "webfetch", "resource": "http://127.0.0.1*", "effect": "deny" }
+  ],
+
+  // ── Agents ──────────────────────────────────────────────────────────────────
+  // Overrides for built-ins (same-ID merge) — keep hidden maintenance agents on
+  // the cheapest models so they never eat your premium allowance.
+  "agents": {
+    // Session titles & tiny summaries — runs constantly, must be dirt cheap.
+    "title": {
+      "hidden": true,
+      "model": "opencode-go/mimo-v2.6-flash"
+    },
+    "summary": {
+      "hidden": true,
+      "model": "opencode-go/mimo-v2.6-flash"
+    },
+    // Compaction of long sessions: cheap but decent reasoning, huge allowance.
+    "compaction": {
+      "hidden": true,
+      "model": "opencode-go/deepseek-v4.1-flash#high"
+    },
+    // Planning benefits most from strong reasoning.
+    "plan": {
+      "model": "opencode-go/kimi-k3.1-pro#high"
+    },
+    // Research & multi-step subagent work: cheap-but-capable, big allowance.
+    "general": {
+      "model": "opencode-go/deepseek-v4.1-flash#high"
+    },
+    // Code exploration: near-free search workhorse.
+    "explore": {
+      "model": "opencode-go/mimo-v2.6-flash"
+    }
+  },
+
+  // ── MCP servers (all free) ──────────────────────────────────────────────────
+  // NOTE: project-level configs REPLACE this map instead of merging it, so also
+  // keep this block in a workspace-level opencode.jsonc above your projects.
+  "mcp": {
+    "servers": {
+      // Up-to-date library & framework docs for any API. Free, no auth needed.
+      "context7": {
+        "type": "remote",
+        "url": "https://mcp.context7.com/mcp"
+      },
+      // Answers from a deep index of public GitHub repositories (readmes, code).
+      "deepwiki": {
+        "type": "remote",
+        "url": "https://mcp.deepwiki.com/mcp"
+      },
+      // Official GitHub tools (issues, PRs, code search). Disabled by default:
+      // enable it here, then run /mcps → github → sign in.
+      "github": {
+        "type": "remote",
+        "url": "https://api.githubcopilot.com/mcp",
+        "disabled": true
+      }
+    }
+  }
+}
