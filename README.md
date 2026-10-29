@@ -107,7 +107,7 @@ for what can actually escape or destroy:
 | --- | --- | --- |
 | Publishing | `git commit` · `git push` · `git tag` · `gh pr create`/`merge`/`close` · `gh release` | ask |
 | History destroys | `git reset --hard` · `git clean -f` · `git filter-branch` | ask |
-| Outside the workspace | writing/editing beyond the project | ask |
+| Outside the workspace | writing/editing beyond the project — **except** scratch/toolchain zones: `/tmp/*`, `~/.opencode`, `~/.local/share/opencode`, `~/.cache`, `~/.cargo`, `~/go` | ask (zones ↑ are free) |
 | Secrets & OS | `sudo`, `~/.ssh`, `~/.gnupg`, `~/.aws`, `~/.kube`, `/etc/shadow`, `/etc/sudoers`, token/credential files, OpenCode's `auth.json` | **deny** |
 | Local network | `webfetch` to `localhost` / `127.0.0.1` | **deny** |
 

@@ -42,6 +42,8 @@
     { "action": "shell", "resource": "cat *known_hosts*", "effect": "deny" },
     { "action": "shell", "resource": "cat *credentials*", "effect": "deny" },
     { "action": "shell", "resource": "cat *token*", "effect": "deny" },
+    { "action": "read", "resource": "/etc/shadow*", "effect": "deny" },
+    { "action": "read", "resource": "/etc/sudoers*", "effect": "deny" },
 
     // 🙋 Ask: publishing to remotes / creating public artifacts.
     { "action": "shell", "resource": "git commit *", "effect": "ask" },
@@ -58,8 +60,17 @@
     { "action": "shell", "resource": "git filter-branch *", "effect": "ask" },
     { "action": "shell", "resource": "git rebase *", "effect": "allow" },
 
-    // 🙋 Ask: writing outside the workspace (system/user files).
+    // 🙋 Ask: writing outside the workspace (system/user files), then open the
+    // known-safe zones below it. Last matching rule wins, so the allows below
+    // re-open only scratch/toolchain paths — your dotfiles and /etc still ask.
     { "action": "external_directory", "resource": "*", "effect": "ask" },
+    { "action": "external_directory", "resource": "/tmp/opencode*", "effect": "allow" },
+    { "action": "external_directory", "resource": "/tmp/*", "effect": "allow" },
+    { "action": "external_directory", "resource": "~/.opencode/*", "effect": "allow" },
+    { "action": "external_directory", "resource": "~/.local/share/opencode/*", "effect": "allow" },
+    { "action": "external_directory", "resource": "~/.cache/*", "effect": "allow" },
+    { "action": "external_directory", "resource": "~/.cargo/*", "effect": "allow" },
+    { "action": "external_directory", "resource": "~/go/*", "effect": "allow" },
 
     // 🔒 Local-network guard: agents must not poke services on this machine.
     { "action": "webfetch", "resource": "http://localhost*", "effect": "deny" },
