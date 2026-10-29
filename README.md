@@ -1,96 +1,145 @@
-# opencode-config
+<div align="center">
 
-My portable [OpenCode](https://opencode.ai) configuration for the
-**OpenCode Go** subscription: model assignments tuned for price ≫ performance,
-a full agent roster, safety-first-but-permissive permissions, free MCP servers,
-slash commands, and task skills.
+# ⚙️ opencode-config
 
-Run `install.sh` inside the cloned repo to install everything globally.
+A portable, preconfigured **[OpenCode](https://opencode.ai)** setup for the
+**OpenCode Go** subscription — agents, skills, commands, free MCP servers, and
+a permission policy that only asks when it matters.
+
+*Clone it, run one script, and OpenCode comes out ready to work.*
+
+![license](https://img.shields.io/badge/license-The%20Unlicense-4c9ee8?style=flat-square)
+![bash](https://img.shields.io/badge/uses-bash%20%2B%20tar-121011?style=flat-square&logo=gnu-bash&logoColor=white)
+![target](https://img.shields.io/badge/opencode-v2.2.x-5963fc?style=flat-square)
+![provider](https://img.shields.io/badge/provider-OpenCode%20Go-90b99f?style=flat-square)
+
+</div>
+
+---
+
+## ✦ Quick start
 
 ```bash
 git clone git@github.com:<you>/opencode-config.git
 cd opencode-config
-./install.sh              # global config + MCP layer for ~/Projects
-./install.sh ~/my-projects  # …or point the MCP layer somewhere else
+
+./install.sh                        # global config + MCP layer for ~/Projects
+./install.sh ~/some-other-projects  # …or point the MCP layer wherever you like
 ```
 
-The script backs up your existing state to `~/.config/opencode.backup-<timestamp>`
-before touching anything, and is idempotent — rerun it after pulling updates.
-TUI settings (`cli.json`) and your OpenCode auth are never modified.
+One-time, after installing:
 
-## What gets installed
+```text
+/connect   → OpenCode Go → paste your API key
+/mcps      → github → sign in (optional, ships disabled)
+```
 
-| Where | What |
+**Safety net:** anything already in `~/.config/opencode` is copied to
+`~/.config/opencode.backup-<timestamp>` first, and one `mv` puts it back.
+The script is idempotent — rerun it any time after pulling updates. TUI
+settings (`cli.json`) and your authentication are never touched.
+
+## ✦ What gets installed
+
+| Destination | Contents |
 | --- | --- |
-| `~/.config/opencode/opencode.jsonc` | Model defaults, permissions, agent-model overrides, MCP servers |
-| `~/.config/opencode/agents/` | `quick`, `deep`, `free`, `reviewer`, `critic`, `tester`, `wordsmith`, `architect` |
-| `~/.config/opencode/commands/` | `/review`, `/commit`, `/issue <n>`, `/design` |
-| `~/.config/opencode/skills/` | `debugging`, `commits`, `tests`, `release` |
-| `<workspace>/opencode.jsonc` | Workspace-level MCP layer (see below) |
+| `~/.config/opencode/opencode.jsonc` | Go-plan model assignments, permissions, agent overrides, MCP servers |
+| `~/.config/opencode/agents/` | 8 agents — `quick`, `deep`, `free`, `reviewer`, `critic`, `tester`, `wordsmith`, `architect` |
+| `~/.config/opencode/commands/` | `/review` · `/commit` · `/issue <n>` · `/design` |
+| `~/.config/opencode/skills/` | `debugging` · `commits` · `tests` · `release` |
+| `<workspace>/opencode.jsonc` | The workspace MCP layer — see [*Why the layer exists*](#-why-the-workspace-mcp-layer-exists) |
 
-First-time only, afterward:
+Everything reloads without restarting OpenCode: edit a file in
+`~/.config/opencode/` and it applies immediately (or run `/reload`).
 
-1. `/connect` → **OpenCode Go** → paste your API key.
-2. Optional: `/mcps` → **github** → sign in (the server ships disabled).
+## ⚡ Model strategy — price ≫ performance on OpenCode Go
 
-## Model strategy (price ≫ performance on OpenCode Go)
+Assignments pick the *cheapest capable* model for each job, keeping premium
+allowances (the low-`$15/month`-cap models) for the work that actually needs
+them. Models that train on request data (Muse Spark, Iceman) are excluded
+everywhere.
 
-| Role | Model | Why |
+| Role | Model | Rationale |
 | --- | --- | --- |
-| Daily driver | `glm-5.3-flash` | Best quality-per-dollar flash tier, big allowance, zero data retention |
-| Titles, summaries, explore | `mimo-v2.6-flash` | Cheapest; runs on every message despite being bought from the floor |
-| General subagent, compaction | `deepseek-v4.1-flash` | Capable cheap reasoning, biggest allowance |
-| Reviewer | `kimi-k2.7-code` | Coding specialist |
-| Plan, deep-work, critic, architect | `kimi-k3.1-pro#high` | Premium reasoning, used sparingly |
-| Docs | `minimax-m3.1-flash` | Cheap writer |
-| Unlimited free | `beam-free` | When you hit a cap (`/models` — beware 30-day provider retention) |
+| **Daily driver** | `glm-5.3-flash` | Best quality-per-dollar flash tier, $60/mo allowance, zero data retention |
+| Titles · summaries · explore | `mimo-v2.6-flash` | The cheapest model — constant housekeeping runs cost ~nothing |
+| General subagent · compaction | `deepseek-v4.1-flash#high` | Capable cheap reasoning with the biggest allowance |
+| Code review | `kimi-k2.7-code` | Coding specialist at mid price |
+| Planning · deep work · critic · architect | `kimi-k3.1-pro#high` | Premium reasoning, deliberately rationed |
+| Documentation | `minimax-m3.1-flash` | Cheap and competent prose |
+| Free unlimited | `beam-free` | When a cap is hit — `/models` to switch (30-day provider retention) |
 
-Models that train on request data (Muse Spark, Iceman) are not used anywhere.
+## 🤖 The agent roster
 
-### Switching agents
+Three layers of firepower, switched in the TUI or invoked by name:
 
-| Agent | Type | Use for |
+**Primary agents** (pick with Tab / the agent picker)
+
+| Agent | Model | Use for |
 | --- | --- | --- |
-| `build` (default) / `plan` | primary | everyday work / pre-implementation planning |
-| `quick` | primary | small tasks with minimal ceremony |
-| `deep` | primary | mystery bugs, gnarly refactors |
-| `free` | primary | literal-scale free unlimited throwaway work |
-| `reviewer` / `critic` | subagent | change review / adversarial pre-merge attacks |
-| `tester` / `wordsmith` / `architect` | subagent | tests / docs-only edits / design docs |
+| `build` *(default)* | session model | everyday work |
+| `plan` | kimi-k3.1-pro#high | pre-implementation planning mode |
+| `quick` | mimo-v2.6-flash | small tasks, zero ceremony |
+| `deep` | kimi-k3.1-pro#high | mystery bugs, gnarly refactors |
+| `free` | beam-free | throwaway experiments at literal $0 |
 
-## Permissions philosophy
+**Subagents** (launched on demand)
 
-Permissive by default. Agents run shell freely; the only prompts are:
+| Agent | Model | Use for |
+| --- | --- | --- |
+| `reviewer` | kimi-k2.7-code | severity-ordered change review (read-only) |
+| `critic` | kimi-k3.1-pro#high | adversarial pre-merge attacks on plans and diffs |
+| `tester` | deepseek-v4.1-flash#high | conventions-first, runner-verified test writing |
+| `wordsmith` | minimax-m3.1-flash | docs-only edits (denied from touching source) |
+| `architect` | kimi-k3.1-pro#high | researches the repo, writes options + tradeoffs |
 
-- **Publishing**: `git commit`, `git push`, `git tag`, `gh pr create`/`merge`/`close`, `gh release`
-- **History destroys**: `git reset --hard`, `git clean -f`, `git filter-branch`
-- **Outside the workspace**: writing/editing files beyond the project
+**Maintenance** (hidden, runs constantly)
 
-Hard-denied without asking: `sudo`, `~/.ssh`, `~/.gnupg`, `~/.aws`, `~/.kube`,
-`/etc/shadow`, `/etc/sudoers`, token/credential files, and OpenCode's own
-`auth.json`. Agents also cannot fetch `localhost`/`127.0.0.1` URLs.
+`title` and `summary` on `mimo-v2.6-flash`, `compaction` on
+`deepseek-v4.1-flash#high` — so housekeeping never burns premium allowance.
 
-## The workspace MCP layer (why it exists)
+## 🔒 Permission philosophy
+
+**Permissive by default.** Agents work freely and interruptions are reserved
+for what can actually escape or destroy:
+
+| Category | Rules | Effect |
+| --- | --- | --- |
+| Publishing | `git commit` · `git push` · `git tag` · `gh pr create`/`merge`/`close` · `gh release` | ask |
+| History destroys | `git reset --hard` · `git clean -f` · `git filter-branch` | ask |
+| Outside the workspace | writing/editing beyond the project | ask |
+| Secrets & OS | `sudo`, `~/.ssh`, `~/.gnupg`, `~/.aws`, `~/.kube`, `/etc/shadow`, `/etc/sudoers`, token/credential files, OpenCode's `auth.json` | **deny** |
+| Local network | `webfetch` to `localhost` / `127.0.0.1` | **deny** |
+
+Secrets are never *asked about* — they are hard-denied outright.
+
+## 🌐 Why the workspace MCP layer exists
 
 In OpenCode v2.2.x, a project-level config file **replaces** the global `mcp`
-map instead of merging it, so servers configured only in the global config
-vanish inside any project that has its own config. The workaround: define the
-servers in a workspace-level `opencode.jsonc` above your project directories —
-every project then inherits them. `install.sh` writes that layer for you.
+map instead of merging it — servers configured only globally vanish inside any
+project that has its own config. The workaround is to define the servers in a
+workspace-level `opencode.jsonc` *above* your project directories, which every
+project then inherits. `install.sh` writes that layer for you (and refuses to
+overwrite a workspace config you already have, telling you which block to add).
 
-Included free servers: **context7** (library docs), **deepwiki** (GitHub repo
-Q&A), **github** (disabled until you sign in at `/mcps`).
+Included free servers:
 
-## Layout
+| Server | Purpose | Auth |
+| --- | --- | --- |
+| `context7` | Up-to-date library & framework docs | none |
+| `deepwiki` | Q&A over a deep index of public GitHub repos | none |
+| `github` | Official GitHub tools (issues, PRs, code search) | sign in once via `/mcps` |
 
-```
-install.sh                  installer (backup + idempotent copy + MCP layer)
-config/
-├── opencode.jsonc          global configuration (canonical source)
-├── agents/                 8 markdown agents
-├── commands/               4 global slash commands
-└── skills/                 debugging, commits, tests, release
-```
+## ✏️ Customizing
 
-Project-specific `.opencode/` configs (per-project commands, permissions)
-live in each project repository, not here.
+- **This repo** is the canonical source: edit `config/*`, then rerun
+  `./install.sh` to re-apply.
+- **Per-project tuning** (project commands like `/ci` or `/preview`) belongs in
+  each project's own `.opencode/` directory, not here — OpenCode discovers and
+  merges those automatically.
+- **cli.json** (themes, keybinds) is TUI territory and intentionally left out.
+
+## 📄 License
+
+Released to the public domain under [The Unlicense](LICENSE) — use, modify,
+and redistribute freely, no attribution required.
